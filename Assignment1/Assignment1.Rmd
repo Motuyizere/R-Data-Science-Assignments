@@ -1,0 +1,250 @@
+---
+title: "R for data science: Assignment 1"
+author: "Moise Tuyizere"
+date: "`r Sys.Date()`"
+output:
+  github_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Introduction
+
+This assignment shows how to install packages in R, import data from different sources, and use the packages to describe the data. Each dataset is explored with the tools from class: `head()`, `str()`, `summary()`, `by()`, `xtabs()`, `boxplot()`, `plot()`, `hist()` and `merge()`.
+
+## Location of the data
+
+All data files are saved in one folder. The code below tells R where that folder is, so each file can be read by its name. If you download this project from GitHub, change the path to the folder where you saved it.
+
+```{r}
+data_folder <- "C:/Users/smartsource ltd/Downloads/Assignment1"
+setwd(data_folder)                           
+knitr::opts_knit$set(root.dir = data_folder) 
+```
+
+```{r}
+list.files()
+```
+
+| File | Source | Package |
+|---|---|---|
+| students.txt | Text file | base R |
+| purchase_orders.csv | CSV file | base R |
+| store_stock.xlsx | Excel | readxl |
+| staff_survey.sav | SPSS | haven |
+| staff_survey.dta | Stata | haven |
+| staff_survey.xpt | SAS | haven |
+| procurement.sqlite | Database (SQLite) | DBI, RSQLite |
+
+## Installation of packages
+
+A package is installed once, then loaded with `library()` every time.
+
+```{r, eval=FALSE}
+install.packages("readxl")    # Excel files
+install.packages("haven")     # SPSS, Stata and SAS files
+install.packages("DBI")       # connecting to databases
+install.packages("RSQLite")   # SQLite database
+```
+
+```{r}
+library(readxl)
+library(haven)
+library(DBI)
+library(RSQLite)
+```
+
+## 1. Data from a text file
+
+```{r}
+students <- read.table("students.txt", header = TRUE)
+head(students)
+str(students)
+summary(students)
+```
+
+Mean height by gender:
+
+```{r}
+by(students$HEIGHT, students$GENDER, mean)
+xtabs(~ GENDER, data = students)
+boxplot(HEIGHT ~ GENDER, data = students, main = "Height by gender")
+```
+
+Relationship between height and weight:
+
+```{r}
+plot(WEIGHT ~ HEIGHT, data = students, main = "Weight and height")
+abline(lm(WEIGHT ~ HEIGHT, data = students)$coefficient)
+cor(students$HEIGHT, students$WEIGHT)
+hist(students$HEIGHT, col = "blue", main = "Height of students", xlab = "Height (cm)")
+```
+
+## 2. Data from a CSV file
+
+```{r}
+orders <- read.csv("purchase_orders.csv")
+head(orders)
+str(orders)
+summary(orders)
+```
+
+The CSV file has missing values in delivery days:
+
+```{r}
+is.na(orders$DELIVERY_DAYS)
+mean(orders$DELIVERY_DAYS, na.rm = TRUE)
+```
+
+Creating a new variable, total cost:
+
+```{r}
+orders$TOTAL_COST <- orders$QUANTITY * orders$UNIT_PRICE
+head(orders[, c("PO_ID", "QUANTITY", "UNIT_PRICE", "TOTAL_COST")])
+```
+
+```{r}
+by(orders$DELIVERY_DAYS, orders$CATEGORY, mean, na.rm = TRUE)
+xtabs(TOTAL_COST ~ CATEGORY, data = orders)
+boxplot(DELIVERY_DAYS ~ CATEGORY, data = orders, main = "Delivery days by category")
+plot(TOTAL_COST ~ QUANTITY, data = orders, main = "Total cost and quantity")
+hist(orders$UNIT_PRICE, col = "blue", main = "Unit price", xlab = "RWF")
+```
+
+## 3. Data from Excel
+
+The `readxl` package reads Excel files directly.
+
+```{r}
+excel_sheets("store_stock.xlsx")
+stock <- read_excel("store_stock.xlsx")
+head(stock)
+str(stock)
+summary(stock)
+```
+
+```{r}
+by(stock$STOCK, stock$CATEGORY, sum)
+xtabs(STOCK ~ CATEGORY, data = stock)
+boxplot(STOCK ~ CATEGORY, data = stock, main = "Stock by category")
+plot(STOCK ~ REORDER_LEVEL, data = stock, main = "Stock and reorder level")
+abline(0, 1, col = "red")   # items below the red line need reordering
+hist(stock$STOCK, col = "blue", main = "Stock quantity", xlab = "Units")
+```
+
+Items below their reorder level:
+
+```{r}
+stock[stock$STOCK <= stock$REORDER_LEVEL, ]
+```
+
+## 4. Data from SPSS
+
+The `haven` package reads SPSS files and keeps the value labels (for example 1 = Finance).
+
+```{r}
+survey_spss <- read_sav("staff_survey.sav")
+head(survey_spss)
+str(survey_spss)
+```
+
+`as_factor()` changes the labels into categories that R understands:
+
+```{r}
+survey_spss$DEPARTMENT <- as_factor(survey_spss$DEPARTMENT)
+survey_spss$SATISFACTION <- as_factor(survey_spss$SATISFACTION)
+summary(survey_spss)
+```
+
+```{r}
+by(survey_spss$AGE, survey_spss$DEPARTMENT, mean)
+xtabs(~ DEPARTMENT + SATISFACTION, data = survey_spss)
+boxplot(AGE ~ DEPARTMENT, data = survey_spss, main = "Age by department")
+plot(survey_spss$SATISFACTION, col = "steelblue", main = "Satisfaction of staff")
+hist(survey_spss$AGE, col = "blue", main = "Age of staff", xlab = "Age")
+```
+
+## 5. Data from Stata
+
+```{r}
+survey_stata <- read_dta("staff_survey.dta")
+head(survey_stata)
+str(survey_stata)
+summary(survey_stata)
+```
+
+Here satisfaction is kept as a score from 1 to 5, so we can calculate its mean.
+
+```{r}
+survey_stata$DEPARTMENT <- as_factor(survey_stata$DEPARTMENT)
+survey_stata$SATISFACTION <- as.numeric(survey_stata$SATISFACTION)
+by(survey_stata$SATISFACTION, survey_stata$DEPARTMENT, mean)
+xtabs(~ DEPARTMENT, data = survey_stata)
+boxplot(SATISFACTION ~ DEPARTMENT, data = survey_stata, main = "Satisfaction score by department")
+plot(SATISFACTION ~ AGE, data = survey_stata, main = "Satisfaction and age")
+hist(survey_stata$SATISFACTION, col = "blue", main = "Satisfaction score", xlab = "Score (1 to 5)")
+```
+
+## 6. Data from SAS
+
+```{r}
+survey_sas <- read_xpt("staff_survey.xpt")
+head(survey_sas)
+str(survey_sas)
+summary(survey_sas)
+```
+
+The SAS file stores department as a number (1 = Finance, 2 = Programs, 3 = Operations).
+
+```{r}
+by(survey_sas$AGE, survey_sas$DEPARTMENT, mean)
+xtabs(~ DEPARTMENT + SATISFACTION, data = survey_sas)
+boxplot(AGE ~ DEPARTMENT, data = survey_sas, main = "Age by department code")
+plot(SATISFACTION ~ AGE, data = survey_sas, main = "Satisfaction and age")
+hist(survey_sas$AGE, col = "blue", main = "Age of staff", xlab = "Age")
+```
+
+## 7. Data from a database (SQLite)
+
+The `DBI` package connects to the database, and `RSQLite` is the driver for SQLite. The same functions work for MySQL, Oracle or Access with a different driver.
+
+```{r}
+con <- dbConnect(SQLite(), "procurement.sqlite")
+dbListTables(con)
+suppliers <- dbReadTable(con, "suppliers")
+orders_db <- dbReadTable(con, "purchase_orders")
+head(suppliers)
+str(suppliers)
+summary(suppliers)
+```
+
+An SQL query can select only the data needed:
+
+```{r}
+dbGetQuery(con, "SELECT SUPPLIER, COUNT(*) AS ORDERS, AVG(DELIVERY_DAYS) AS AVG_DAYS
+                 FROM purchase_orders
+                 GROUP BY SUPPLIER")
+dbDisconnect(con)
+```
+
+Merging the suppliers with the orders, using the supplier name as the key:
+
+```{r}
+orders_suppliers <- merge(orders_db, suppliers, by = "SUPPLIER")
+head(orders_suppliers[, c("PO_ID", "SUPPLIER", "LOCATION", "RATING", "DELIVERY_DAYS")])
+```
+
+```{r}
+by(orders_suppliers$DELIVERY_DAYS, orders_suppliers$RATING, mean, na.rm = TRUE)
+xtabs(~ SUPPLIER + RATING, data = orders_suppliers)
+boxplot(DELIVERY_DAYS ~ RATING, data = orders_suppliers, main = "Delivery days by supplier rating")
+plot(DELIVERY_DAYS ~ RATING, data = orders_suppliers, main = "Supplier rating and delivery days")
+hist(orders_suppliers$DELIVERY_DAYS, col = "blue", main = "Delivery days", xlab = "Days")
+```
+
+## Conclusion
+
+R reads text and CSV files without extra packages. The `readxl` package imports Excel files, `haven` imports SPSS, Stata and SAS files with their labels, and `DBI` with `RSQLite` imports tables from a database using SQL. After importing, all the data becomes a data frame, so the same tools from class (`head()`, `str()`, `summary()`, `by()`, `xtabs()`, `boxplot()`, `plot()`, `hist()` and `merge()`) work on every dataset.

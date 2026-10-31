@@ -1,0 +1,41 @@
+"PO_ID","SUPPLIER","CATEGORY","QUANTITY","UNIT_PRICE","DELIVERY_DAYS"
+"PO001","Kigali Office Supplies","Stationery",98,42600,3
+"PO002","Ubumwe Catering","Catering",28,18900,7
+"PO003","Kigali Office Supplies","Stationery",26,20600,3
+"PO004","Rwanda Tech Ltd","IT Equipment",93,41400,3
+"PO005","Rwanda Tech Ltd","IT Equipment",80,44700,NA
+"PO006","Clean Plus","Cleaning",58,42100,4
+"PO007","Ubumwe Catering","Catering",100,24200,11
+"PO008","Clean Plus","Cleaning",12,48200,10
+"PO009","Clean Plus","Cleaning",87,30500,13
+"PO010","Rwanda Tech Ltd","IT Equipment",66,37100,4
+"PO011","Rwanda Tech Ltd","IT Equipment",37,34000,12
+"PO012","Kigali Office Supplies","Stationery",72,20500,2
+"PO013","Clean Plus","Cleaning",88,7900,5
+"PO014","Clean Plus","Cleaning",77,33800,10
+"PO015","Clean Plus","Cleaning",13,31100,11
+"PO016","Rwanda Tech Ltd","IT Equipment",46,3300,7
+"PO017","Clean Plus","Cleaning",23,46300,7
+"PO018","Rwanda Tech Ltd","IT Equipment",77,42700,NA
+"PO019","Rwanda Tech Ltd","IT Equipment",83,34500,7
+"PO020","Kigali Office Supplies","Stationery",62,3100,9
+"PO021","Rwanda Tech Ltd","IT Equipment",78,30800,6
+"PO022","Clean Plus","Cleaning",38,47000,3
+"PO023","Rwanda Tech Ltd","IT Equipment",20,19700,13
+"PO024","Ubumwe Catering","Catering",13,33100,5
+"PO025","Rwanda Tech Ltd","IT Equipment",36,34400,5
+"PO026","Kigali Office Supplies","Stationery",17,20600,12
+"PO027","Kigali Office Supplies","Stationery",75,13900,9
+"PO028","Ubumwe Catering","Catering",69,38300,4
+"PO029","Rwanda Tech Ltd","IT Equipment",53,27500,7
+"PO030","Kigali Office Supplies","Stationery",89,47200,7
+"PO031","Ubumwe Catering","Catering",62,20800,10
+"PO032","Clean Plus","Cleaning",82,33000,6
+"PO033","Ubumwe Catering","Catering",34,40200,10
+"PO034","Ubumwe Catering","Catering",30,5700,12
+"PO035","Rwanda Tech Ltd","IT Equipment",49,9000,3
+"PO036","Rwanda Tech Ltd","IT Equipment",100,27600,2
+"PO037","Ubumwe Catering","Catering",62,27100,12
+"PO038","Rwanda Tech Ltd","IT Equipment",61,40400,7
+"PO039","Kigali Office Supplies","Stationery",70,20500,5
+"PO040","Kigali Office Supplies","Stationery",13,45600,8
