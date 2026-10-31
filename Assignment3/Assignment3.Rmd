@@ -1,0 +1,522 @@
+---
+title: "R for data science: Assignment 3"
+subtitle: "Practice of class 1 with our own datasets"
+author: "Moise Tuyizere"
+date: "`r Sys.Date()`"
+output:
+  github_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Introduction
+
+This assignment practises everything covered in class 1 (R for data science, Dr. Pacifique), using our own datasets instead of the class data:
+
+| Data | Used for |
+|---|---|
+| students.txt (height, weight and gender of 30 students) | importation, summary statistics, scatter plot, linear model, BMI |
+| purchase_orders.csv (40 purchase orders) | categorical vs continuous, cross tables, bar chart, missing values, merging |
+| Supplier evaluation survey (typed in below) | creating data, missing values coded 99, sorting, subsetting |
+
+Both files are saved in the same folder as this R Markdown file.
+
+```{r}
+data_folder <- "C:/Users/smartsource ltd/Downloads/Assignment2"
+setwd(data_folder)
+knitr::opts_knit$set(root.dir = data_folder)
+```
+
+## Today's class, we will study
+
+* Calculator in R
+* Data structure (vectors, factors, lists, data frame, matrix and arrays)
+* Data importation in R
+* Data description using numerical measures and graphs
+* Data management
+
+## Calculator in R
+
+R works like a calculator. Example: the cost of 25 reams of paper at 6,500 RWF each, plus 18% VAT.
+
+```{r}
+25 * 6500
+25 * 6500 * 1.18
+sqrt(144)
+(120 + 80) / 4
+```
+
+## Data structure (Vectors, Factors, Lists, Data frame, matrix and arrays)
+
+### Vector: the foundational R data structure
+
+#### Numeric
+
+Example 1: unit prices of four items (RWF).
+
+```{r}
+x <- c(0.5, 0.6)
+price <- c(6500, 45000, 1200, 3800)
+summary(price)
+```
+
+Example 2: delivery days of four orders.
+
+```{r}
+days <- c(5, 12, 3, 8)
+mean(days)
+```
+
+#### Logical
+
+Was each order delivered on time?
+
+```{r}
+on_time <- c(TRUE, FALSE, TRUE, TRUE)
+on_time <- c(T, F, T, T)
+on_time
+```
+
+#### Character
+
+```{r}
+x <- c("a", "b", "c")
+category <- c("Stationery", "IT Equipment", "Cleaning", "Catering")
+category
+```
+
+#### Integer
+
+```{r}
+po_number <- 1:10
+po_number
+class(po_number)
+```
+
+#### Complex
+
+```{r}
+x <- c(1+0i, 2+4i)
+x
+class(x)
+```
+
+### Matrix and operation within matrices
+
+Two orders (rows) for three items (columns). Multiplying the quantity matrix by the price matrix gives the cost of each order.
+
+```{r}
+(quantity <- matrix(c(10, 5, 2, 4, 0, 6), nrow = 2, ncol = 3,
+                    dimnames = list(c("Order1", "Order2"), c("Paper", "Toner", "Pens"))))
+(unit_price <- matrix(c(6500, 45000, 1200), nrow = 3, ncol = 1,
+                      dimnames = list(c("Paper", "Toner", "Pens"), "Price")))
+quantity %*% unit_price
+```
+
+### List
+
+A list can hold different types of data together, like the details of one purchase order.
+
+```{r}
+(order <- list("PO001", "Kigali Office Supplies", 25, TRUE))
+```
+
+### Factor
+
+```{r}
+status <- factor(c("Delivered", "Delivered", "Pending", "Delivered", "Cancelled"))
+status
+levels(status)
+table(status)
+```
+
+### Missing values
+
+Create a vector with NAs in it, then find which elements are NA.
+
+```{r}
+delivery_days <- c(5, 7, NA, 10, 3)
+is.na(delivery_days)
+mean(delivery_days)
+mean(delivery_days, na.rm = TRUE)
+```
+
+When "NA" is written in quotes, R treats it as text, not as a missing value:
+
+```{r}
+x <- c(1, 2, 4, "NA", 5)
+bad <- is.na(x)
+print(bad)
+x[!bad]
+```
+
+Keeping only the cases with no missing value in any of several objects:
+
+```{r}
+supplier <- c("S1", "S2", NA, "S4", NA, "S6")
+amount <- c(120000, 85000, NA, 64000, 230000, 47000)
+good <- complete.cases(supplier, amount)
+good
+supplier[good]
+amount[good]
+```
+
+### Coercion
+
+If a character is present in a vector, R converts everything to character strings. If a vector only has logical values and numbers, TRUE becomes 1 and FALSE becomes 0, so `sum()` counts the TRUE values.
+
+```{r}
+c(1, "Paper", TRUE)
+sum(c(TRUE, TRUE, FALSE, TRUE, FALSE))   # number of orders delivered on time
+```
+
+## Create data
+
+A data frame is more general than a matrix because it can hold different types of data (numeric, character and so on), like a sheet in SPSS or Excel.
+
+```{r}
+supplierID <- c(1, 2, 3, 4, 5)
+supplier_name <- c("Kigali Office Supplies", "Rwanda Tech Ltd", "Clean Plus",
+                   "Ubumwe Catering", "Musanze Hardware")
+location <- c("Kigali", "Kigali", "Kigali", "Kigali", "Musanze")
+quality_score <- c(8, 7, 9, 6, NA)
+price_score <- c(7, 6, 8, 9, 5)
+supplierdata <- data.frame(supplierID, supplier_name, location, quality_score, price_score)
+supplierdata
+```
+
+```{r, eval=FALSE}
+View(supplierdata)   # opens the data in a viewer, run in RStudio only
+```
+
+### Create data from keyboard
+
+Step 1: create a data frame with variable names. Step 2: open the editor on it and type the data. This only works in RStudio, so it is not run when knitting.
+
+```{r, eval=FALSE}
+new_order <- data.frame(item = character(0), quantity = numeric(0), price = numeric(0))
+new_order <- edit(new_order)
+```
+
+## Data Importation
+
+R can import data from text files, spreadsheets, statistical packages (SAS, SPSS, Stata) and database management systems (SQL, MySQL, Oracle, Access).
+
+### Data from a text file
+
+```{r}
+data_class <- read.table("students.txt", header = TRUE)
+variable.names(data_class)
+head(data_class)
+tail(data_class)
+data_class[10:20, ]
+summary(data_class$WEIGHT)
+length(data_class$WEIGHT)
+data_class[, -1]
+data_class$WEIGHT
+```
+
+### Data from a CSV file
+
+```{r}
+orders <- read.csv("purchase_orders.csv")
+head(orders)
+str(orders)
+```
+
+### In case you want to use a dataset built in R
+
+```{r, eval=FALSE}
+data()   # list of datasets currently available
+```
+
+```{r}
+data("airquality")
+variable.names(airquality)
+str(airquality)
+```
+
+## Exploration data analysis
+
+### Examine numerical variables using common summary
+
+```{r}
+data_class
+summary(data_class)
+str(data_class)
+```
+
+### Summary Statistics
+
+```{r}
+apply(data_class[, c("HEIGHT", "WEIGHT")], 1, mean)
+apply(data_class[, c("HEIGHT", "WEIGHT")], 2, sd)
+c(mean(data_class$HEIGHT), sd(data_class$HEIGHT))
+c(mean(data_class$WEIGHT), sd(data_class$WEIGHT))
+c(Mean = mean(data_class$HEIGHT), SD = sd(data_class$HEIGHT))
+c(Mean = mean(data_class$WEIGHT), SD = sd(data_class$WEIGHT))
+```
+
+## Variation and covariation using both numbers and graphs
+
+### Relationship between a categorical and a continuous variable
+
+Does the unit price differ between categories of items?
+
+```{r}
+mean(orders$UNIT_PRICE)
+mean(orders$UNIT_PRICE[orders$CATEGORY == "Stationery"])
+mean(orders$UNIT_PRICE[orders$CATEGORY == "IT Equipment"])
+mean(orders$UNIT_PRICE[orders$CATEGORY == "Cleaning"])
+mean(orders$UNIT_PRICE[orders$CATEGORY == "Catering"])
+```
+
+Shortcut with `by()`:
+
+```{r}
+by(orders$UNIT_PRICE, orders$CATEGORY, mean)
+by(orders$UNIT_PRICE, orders$CATEGORY, sd)
+by(orders$UNIT_PRICE, orders$CATEGORY, summary)
+```
+
+Visualising the differences between categories with a box and whisker plot:
+
+```{r}
+boxplot(orders$DELIVERY_DAYS ~ orders$CATEGORY, data = orders,
+        main = "Delivery days by category")
+boxplot(data_class$HEIGHT ~ data_class$GENDER, data = data_class,
+        main = "Height of students by gender")
+```
+
+### Relationship between two categorical variables
+
+Are some categories delivered late more often? An order is "Late" when it takes more than 7 days.
+
+```{r}
+orders$SPEED <- ifelse(orders$DELIVERY_DAYS > 7, "Late", "On time")
+(cross <- xtabs(~ CATEGORY + SPEED, data = orders))
+prop.table(cross, 1)
+```
+
+### Simpson's paradox
+
+A trend that appears in combined data can disappear or reverse when the data is broken into groups. To check for it, compare the relationship for all students together with the relationship inside each gender.
+
+```{r}
+cor(data_class$HEIGHT, data_class$WEIGHT)          # all students
+by(data_class, data_class$GENDER, function(d) cor(d$HEIGHT, d$WEIGHT))
+```
+
+Here the positive relationship holds in both groups, so there is no Simpson's paradox in this data. Checking inside groups is still important, because a combined result can hide the opposite pattern.
+
+## Bar Chart
+
+Spend per category (million RWF) in two quarters:
+
+```{r}
+dat <- read.table(text = "Stationery IT Cleaning Catering
+Q1 4.2 9.8 1.5 6.0
+Q2 3.6 12.1 2.0 5.4", header = TRUE)
+barplot(as.matrix(dat), beside = TRUE, col = c("Red", "green"),
+        legend.text = rownames(dat), main = "Spend by category and quarter")
+```
+
+```{r}
+barplot(as.matrix(dat), main = "Spend by category (stacked)")
+barplot(table(orders$CATEGORY), col = "steelblue", main = "Number of orders by category")
+```
+
+## Scatter Plot
+
+```{r}
+plot(WEIGHT ~ HEIGHT, data = data_class)
+plot(data_class$HEIGHT, data_class$WEIGHT)
+plot(data_class[, 3], data_class[, 4], main = "Graph")
+cor(data_class$HEIGHT, data_class$WEIGHT)
+```
+
+## Linear Models
+
+```{r}
+plot(WEIGHT ~ HEIGHT, data = data_class)
+abline(lm(WEIGHT ~ HEIGHT, data = data_class)$coefficient)
+```
+
+```{r}
+data_lm <- lm(HEIGHT ~ WEIGHT, data = data_class)
+summary(data_lm)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+plot(data_lm)
+par(mfrow = c(1, 1))
+```
+
+```{r}
+hist(data_class$HEIGHT)
+hist(data_class$WEIGHT, col = "blue")
+```
+
+### Linear with other line
+
+```{r}
+plot(WEIGHT ~ HEIGHT, data = data_class)
+abline(lm(WEIGHT ~ HEIGHT, data = data_class)$coefficient)
+lines(lowess(data_class$HEIGHT, data_class$WEIGHT), col = "blue")
+cor(data_class$HEIGHT, data_class$WEIGHT)
+lm(WEIGHT ~ HEIGHT, data = data_class)
+```
+
+## Data management
+
+### Create another variable
+
+BMI of the students, and total cost of the purchase orders.
+
+```{r}
+attach(data_class)
+(BMI <- WEIGHT / (HEIGHT / 100)^2)
+(BMI <- round(WEIGHT / (HEIGHT / 100)^2, digits = 2))
+head(cbind(data_class, BMI), n = 5)
+new_data_class <- cbind(data_class, BMI)
+tail(cbind(data_class, BMI), n = 10)
+detach(data_class)
+```
+
+```{r}
+orders$TOTAL_COST <- orders$QUANTITY * orders$UNIT_PRICE
+head(orders[, c("PO_ID", "QUANTITY", "UNIT_PRICE", "TOTAL_COST")])
+```
+
+### Summary of BMI
+
+```{r}
+summary(BMI)
+stem(BMI, scale = 2)
+```
+
+## Date
+
+```{r}
+today <- Sys.Date()
+format(today, format = "%B %d %Y")
+format(today, format = "%A")
+```
+
+How long did an order take, and how many days until a contract ends?
+
+```{r}
+order_date <- as.Date("2026-09-14")
+delivery_date <- as.Date("2026-09-26")
+delivery_date - order_date
+contract_end <- as.Date("2027-06-30")
+difftime(contract_end, today, units = "days")
+difftime(contract_end, today, units = "weeks")
+```
+
+## Subsetting
+
+Use of `$`, `[]` or `[[]]`.
+
+Creation of supplier evaluation data. Interest: how suppliers in Kigali and outside Kigali are rated by staff. Five questions were asked, for example: does the supplier deliver on time? (1 strongly disagree, 2 disagree, 3 neither agree nor disagree, 4 agree, 5 strongly agree). Years of partnership coded 99 means the value is missing.
+
+```{r}
+supplier <- c(1, 2, 3, 4, 5)
+location <- c("Kigali", "Kigali", "Musanze", "Huye", "Kigali")
+type <- c("Goods", "Services", "Goods", "Goods", "Services")
+years <- c(3, 8, 1, 6, 99)
+q1 <- c(5, 3, 3, 3, 2)
+q2 <- c(4, 5, 5, 3, 2)
+q3 <- c(5, 2, 5, 4, 1)
+q4 <- c(5, 5, 5, NA, 2)
+q5 <- c(5, 5, 2, NA, 1)
+evaluation <- data.frame(supplier, location, type, years, q1, q2, q3, q4, q5)
+str(evaluation)
+names(evaluation)
+```
+
+What can be done: combine the scores of the five questions, handle the missing values, create a dataset of what we want, and create groups by years of partnership.
+
+### Missing value
+
+```{r}
+evaluation$years[evaluation$years == 99] <- NA
+evaluation$yearcat[evaluation$years > 5] <- "Long term"
+evaluation$yearcat[evaluation$years >= 2 & evaluation$years <= 5] <- "Medium term"
+evaluation$yearcat[evaluation$years < 2] <- "New"
+evaluation$total_score <- evaluation$q1 + evaluation$q2 + evaluation$q3 + evaluation$q4 + evaluation$q5
+evaluation
+```
+
+### One way to handle missing values
+
+Listwise deletion removes all observations with missing data. Missing values can also be replaced by the average of the remaining data.
+
+```{r}
+is.na(evaluation[, 5:9])
+newdata <- na.omit(evaluation)
+newdata
+```
+
+Replacing missing delivery days in the orders by the average:
+
+```{r}
+orders$DELIVERY_DAYS[is.na(orders$DELIVERY_DAYS)] <- round(mean(orders$DELIVERY_DAYS, na.rm = TRUE))
+sum(is.na(orders$DELIVERY_DAYS))
+```
+
+### Sorting data
+
+```{r}
+order(evaluation$years)
+(newdata2 <- evaluation[order(evaluation$years), ])
+head(orders[order(orders$TOTAL_COST, decreasing = TRUE), c("PO_ID", "SUPPLIER", "TOTAL_COST")])
+```
+
+### Merging data sets
+
+`merge()` joins two data frames horizontally by a common key variable. Here the orders are joined with the supplier locations using the supplier name.
+
+```{r}
+supplier_info <- data.frame(SUPPLIER = c("Kigali Office Supplies", "Rwanda Tech Ltd",
+                                         "Clean Plus", "Ubumwe Catering"),
+                            LOCATION = c("Kigali", "Kigali", "Kigali", "Kigali"),
+                            RATING = c(4.5, 4.0, 4.2, 3.8))
+orders_full <- merge(orders, supplier_info, by = "SUPPLIER")
+head(orders_full[, c("PO_ID", "SUPPLIER", "LOCATION", "RATING")])
+```
+
+`rbind()` joins two data frames vertically. They must have the same variables.
+
+```{r}
+new_supplier <- data.frame(SUPPLIER = "Huye Stationers", LOCATION = "Huye", RATING = 4.1)
+rbind(supplier_info, new_supplier)
+```
+
+### Subset (selecting variables, dropping variables, selecting observations)
+
+```{r}
+newdata3 <- evaluation[, c(5:9)]
+myvars <- c("q1", "q2", "q3", "q4", "q5")
+(newdata3 <- evaluation[myvars])
+newdata4 <- evaluation[, c(-1, -2)]
+(newdata4 <- evaluation[, -(1:5)])
+newdata5 <- evaluation[, c(-1, -7)]
+evaluation[[4]]
+evaluation$years
+newdata6 <- evaluation[c(-1, -3), ]
+(newdata6 <- evaluation[c(2, 4, 5), ])
+(newdata7 <- subset(evaluation, years >= 5 | years < 2, select = c(q1, q2, q3, q4, q5)))
+(newdata8 <- evaluation[evaluation$location == "Kigali" & evaluation$total_score > 15, ])
+```
+
+Orders above 2 million RWF that took more than 7 days:
+
+```{r}
+subset(orders, TOTAL_COST > 2000000 & DELIVERY_DAYS > 7,
+       select = c(PO_ID, SUPPLIER, TOTAL_COST, DELIVERY_DAYS))
+```
